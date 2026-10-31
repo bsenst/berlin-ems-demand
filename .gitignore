@@ -2,8 +2,9 @@
 data/*.csv
 !data/.gitkeep
 
-# Models (generated)
-models/
+# Models – keep the trained artifacts so Streamlit Cloud can load them
+# (they are produced by train.py / the GitHub Action)
+# models/          <-- deliberately NOT ignored any more
 !models/.gitkeep
 
 # Python

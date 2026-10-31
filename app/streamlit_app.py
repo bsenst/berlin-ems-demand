@@ -6,7 +6,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
-import plotly.graph_objects as go
 from pathlib import Path
 import joblib
 import sys
@@ -33,6 +32,21 @@ def load_data():
     return load_raw_data()
 
 
+def ensure_model_exists():
+    """Train the model on the fly if artifacts are missing (useful on Streamlit Cloud)."""
+    model_path = MODELS_DIR / "model.joblib"
+    if model_path.exists():
+        return
+
+    st.info("Model not found – training a fresh model now (this may take 1–2 minutes)...")
+    with st.spinner("Training model..."):
+        # Import here to avoid slowing down normal startup
+        from train import main as train_main
+        train_main()
+    st.success("Model trained successfully!")
+    st.rerun()
+
+
 @st.cache_resource
 def load_model_artifacts():
     model = joblib.load(MODELS_DIR / "model.joblib")
@@ -50,6 +64,9 @@ def main():
         using open data from [Berliner Feuerwehr Open Data](https://github.com/Berliner-Feuerwehr/BF-Open-Data).
         """
     )
+
+    # Ensure model is available (trains on first run if missing)
+    ensure_model_exists()
 
     # Sidebar
     st.sidebar.header("Navigation")

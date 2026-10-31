@@ -8,6 +8,9 @@ on:
   # Allow manual trigger from the Actions tab
   workflow_dispatch:
 
+permissions:
+  contents: write   # needed to push the trained model back to the repo
+
 jobs:
   retrain:
     runs-on: ubuntu-latest
@@ -41,13 +44,10 @@ jobs:
             models/recent_data.csv
           retention-days: 30
 
-      # Optional: commit the new model back to the repo (disabled by default)
-      # Uncomment the steps below if you want the trained model committed automatically.
-      #
-      # - name: Commit updated model
-      #   run: |
-      #     git config user.name "github-actions[bot]"
-      #     git config user.email "github-actions[bot]@users.noreply.github.com"
-      #     git add models/
-      #     git diff --staged --quiet || git commit -m "chore: retrain model with latest data [skip ci]"
-      #     git push
+      - name: Commit updated model to repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add models/model.joblib models/feature_names.joblib models/metrics.joblib models/recent_data.csv
+          git diff --staged --quiet || git commit -m "chore: retrain model with latest data [skip ci]"
+          git push
