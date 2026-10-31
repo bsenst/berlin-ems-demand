@@ -1,0 +1,53 @@
+name: Retrain EMS Demand Model
+
+on:
+  # Run every Sunday at 03:00 UTC (weekly is enough – source data is updated daily)
+  schedule:
+    - cron: "0 3 * * 0"
+
+  # Allow manual trigger from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Train model (downloads latest data automatically)
+        run: python train.py
+
+      - name: Upload model artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-artifacts
+          path: |
+            models/model.joblib
+            models/feature_names.joblib
+            models/metrics.joblib
+            models/recent_data.csv
+          retention-days: 30
+
+      # Optional: commit the new model back to the repo (disabled by default)
+      # Uncomment the steps below if you want the trained model committed automatically.
+      #
+      # - name: Commit updated model
+      #   run: |
+      #     git config user.name "github-actions[bot]"
+      #     git config user.email "github-actions[bot]@users.noreply.github.com"
+      #     git add models/
+      #     git diff --staged --quiet || git commit -m "chore: retrain model with latest data [skip ci]"
+      #     git push

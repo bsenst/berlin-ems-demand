@@ -27,6 +27,8 @@ License: CC BY 4.0
 Primary file used:
 - `Datasets/Daily_Data/BFw_mission_data_daily.csv` (~3 200 days, 2018 → present)
 
+**Update frequency:** The source data is updated **daily** (official Data Catalog).
+
 Key columns:
 - `mission_count_ems` – target (number of medical emergency missions)
 - `mission_count_ems_critical`, `mission_count_fire`, response-time statistics, etc.
@@ -50,6 +52,8 @@ berlin-ems-demand/
 │   ├── features.py
 │   └── models.py
 ├── models/                  # Saved model + preprocessor (created by train.py)
+├── .github/workflows/
+│   └── retrain.yml          # Scheduled model retraining
 └── data/                    # Local copy of the CSV (optional)
 ```
 
@@ -90,6 +94,42 @@ streamlit run app/streamlit_app.py
 2. Upload the repo contents (or connect the GitHub repo).
 3. The Space will automatically run `streamlit run app/streamlit_app.py`.
 
+## Automated Retraining (GitHub Actions)
+
+The repository includes a scheduled GitHub Action that retrains the model on the latest data.
+
+### What it does
+- Runs every **Sunday at 03:00 UTC** (source data is updated daily; weekly retraining is sufficient)
+- Can also be triggered **manually** from the Actions tab
+- Downloads the newest CSV, runs `train.py`, and uploads the model artifacts as a workflow artifact (kept for 30 days)
+
+### How to set it up / use it
+
+1. The workflow file is already present:
+   ```
+   .github/workflows/retrain.yml
+   ```
+
+2. **No extra secrets are required** – the action only needs the public dataset URL and the code in this repository.
+
+3. **Enable Actions** (if not already enabled):
+   - Go to the repository → **Settings** → **Actions** → **General**
+   - Under “Actions permissions” choose “Allow all actions and reusable workflows” (or at least allow actions created by GitHub).
+
+4. **Run manually** (recommended the first time):
+   - Go to the **Actions** tab
+   - Select **“Retrain EMS Demand Model”**
+   - Click **“Run workflow”** → **Run workflow**
+
+5. After a successful run you can download the fresh `model.joblib`, `feature_names.joblib` and `metrics.joblib` from the workflow artifacts.
+
+6. (Optional) If you want the trained model committed back into the repository automatically, uncomment the final “Commit updated model” step inside `.github/workflows/retrain.yml` and give the default `GITHUB_TOKEN` write permission (Settings → Actions → General → Workflow permissions → Read and write).
+
+### Why this helps the project
+- Keeps the model up-to-date with the daily-updated source data
+- Demonstrates reproducibility and production-minded automation
+- Strengthens the “Reproducibility” and overall professionalism criteria of the ML Zoomcamp evaluation
+
 ## Model Performance (typical)
 
 | Model              | RMSE (hold-out) | MAE  | R²   |
@@ -106,11 +146,11 @@ streamlit run app/streamlit_app.py
 - Extensive EDA (temporal patterns, correlations, target distribution)
 - Multiple models + hyper-parameter tuning
 - Notebook → script export (`train.py`)
-- Reproducible (data download instructions + requirements)
+- Reproducible (data download instructions + requirements + automated retrain)
 - Model deployment (Streamlit dashboard + optional FastAPI)
 - Dependency management + virtual environment
 - Containerization possible (Dockerfile included)
-- Cloud-ready (Streamlit Cloud / HF Spaces)
+- Cloud-ready (Streamlit Cloud / HF Spaces) + scheduled retraining
 
 ## Author
 
